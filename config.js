@@ -12,8 +12,8 @@
 // =====================================================================
 
 window.ATTENDX_CONFIG = {
-  SUPABASE_URL: '',
-  SUPABASE_KEY: '',
+  SUPABASE_URL: 'https://pmtynknfymradrqpspdd.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_cWiMkpVF5Ayj5yCW4RC7rA_EHps2Wba',
 
   NAMA_SEKOLAH: 'SMK Rantau Panjang',
 
