@@ -142,7 +142,7 @@ function DemoDB() {
       const berisiko = (m.id * 7919) % 100 < 8;
       const pt = berisiko ? 0.15 : 0.035;
       const r = rnd(), r2 = rnd();
-      const status = r < pt ? 'T' : r < pt + 0.03 ? 'L' : r < pt + 0.045 ? 'C' : 'H';
+      const status = r < pt ? 'T' : 'H';
       let sebab = null, catatan = null;
       if (status === 'T') {
         sebab = berisiko ? (r2 < 0.5 ? 'Ponteng' : r2 < 0.8 ? 'Sakit' : r2 < 0.9 ? 'Pengangkutan' : 'Lain-lain')

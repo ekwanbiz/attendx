@@ -191,7 +191,7 @@
 
     const n = { H: 0, T: 0, L: 0, C: 0 }; let belum = 0;
     for (const m of R.murid) { const s = R.status[m.id].status; if (s) n[s]++; else belum++; }
-    const ringkas = '<div class="grid-4">' + ['H', 'T', 'L', 'C'].map((s) => '<div class="ringkas s-' + s + '"><div class="l">' + LABEL[s] + '</div><div class="n">' + n[s] + '</div></div>').join('') + '</div>';
+    const ringkas = '<div class="grid-2">' + ['H', 'T'].map((s) => '<div class="ringkas s-' + s + '"><div class="l">' + LABEL[s] + '</div><div class="n">' + n[s] + '</div></div>').join('') + '</div>';
 
     const info = R.sudah && !berubah()
       ? '<span class="lencana ok">Sudah direkod · ' + masa(R.dikemaskini) + '</span>'
@@ -199,7 +199,7 @@
 
     const senarai = R.murid.map((m, i) => {
       const st = R.status[m.id];
-      const butang = ['H', 'T', 'L', 'C'].map((s) => '<button type="button" data-a="status" data-id="' + m.id + '" data-s="' + s + '" class="' + (st.status === s ? 'on-' + s : '') + '" aria-label="' + LABEL[s] + '" aria-pressed="' + (st.status === s) + '">' + s + '</button>').join('');
+      const butang = ['H', 'T'].map((s) => '<button type="button" data-a="status" data-id="' + m.id + '" data-s="' + s + '" class="' + (st.status === s ? 'on-' + s : '') + '" aria-pressed="' + (st.status === s) + '">' + LABEL[s] + '</button>').join('');
       let sebab = '';
       if (st.status === 'T') {
         sebab = '<div class="sebab"><span class="label">Sebab tidak hadir</span><div class="sebab-btn">' +
@@ -301,7 +301,7 @@
       isi = '<div class="senarai">' + J.harian.map((r) => {
         const j = r.h + r.t + r.l + r.c; const pp = peratus(r.h, r.t, r.l, r.c);
         return '<button type="button" class="item" data-a="butiran" data-tarikh="' + r.tarikh + '"><div class="kiri"><div class="t1">' + Tarikh.pendek(r.tarikh) + '</div>' +
-          '<div class="t2">' + (r.h + r.l) + ' / ' + j + ' hadir · ' + r.t + ' tidak hadir' + (r.l ? ' · ' + r.l + ' lewat' : '') + '</div></div>' +
+          '<div class="t2">' + (r.h + r.l) + ' / ' + j + ' hadir · ' + r.t + ' tidak hadir</div></div>' +
           '<div style="display:flex;align-items:center;gap:6px"><span class="lencana ' + kelasLencana(pp) + '">' + pp + '%</span><span style="color:#9AA3B2">' + ikon('kanan', 18) + '</span></div></button>';
       }).join('') + '</div>';
     } else {
@@ -312,8 +312,6 @@
         if (m.t) bah.push(m.t + ' hari tidak hadir');
         const sb = [['Sakit', m.sakit], ['Ponteng', m.ponteng], ['Pengangkutan', m.pengangkutan], ['Lain-lain', m.lain]].filter((x) => x[1]).map((x) => x[0] + ' ' + x[1]);
         if (sb.length) bah.push(sb.join(', '));
-        if (m.l) bah.push('lewat ' + m.l + ' kali');
-        if (m.c) bah.push('cuti ' + m.c);
         return '<div class="item"><div class="kiri"><div class="t1">' + esc(m.nama) + '</div><div class="t2">' + (bah.length ? bah.join(' · ') : 'Tiada rekod tidak hadir') + '</div></div>' +
           '<span class="lencana ' + kelasLencana(pp) + '">' + pp + '%</span></div>';
       }).join('') + '</div>';
@@ -352,20 +350,20 @@
       '<div style="text-align:center"><div style="font-size:12px;letter-spacing:.5px;color:var(--kelabu)">' + esc(String(cfg.NAMA_SEKOLAH).toUpperCase()) + '</div>' +
       '<h2 style="margin-top:4px">Laporan Kehadiran Bulanan</h2>' +
       '<div class="kecil" style="margin-top:4px">Kelas ' + esc(k ? k.nama : '') + ' · ' + Tarikh.bulanLabel(J.bulan) + ' · ' + J.harian.length + ' hari persekolahan · purata ' + peratus(jum.h, jum.t, jum.l, jum.c) + '%</div></div>' +
-      '<div class="jadual-luar"><table><thead><tr><th rowspan="2">Bil</th><th rowspan="2" style="text-align:left">Nama murid</th><th rowspan="2">H</th><th rowspan="2">L</th><th rowspan="2">C</th><th rowspan="2">T</th><th rowspan="2">%</th><th colspan="4">Sebab tidak hadir</th></tr>' +
+      '<div class="jadual-luar"><table><thead><tr><th rowspan="2">Bil</th><th rowspan="2" style="text-align:left">Nama murid</th><th rowspan="2">Hadir</th><th rowspan="2">Tidak hadir</th><th rowspan="2">%</th><th colspan="4">Sebab tidak hadir</th></tr>' +
       '<tr><th>Sakit</th><th>Ponteng</th><th>Pengang.</th><th>Lain</th></tr></thead><tbody>' +
-      baris.map((r) => '<tr><td>' + r.bil + '</td><td class="nm">' + esc(r.nama) + '</td><td>' + r.h + '</td><td>' + r.l + '</td><td>' + r.c + '</td><td>' + r.t + '</td><td>' + r.p + '</td><td>' + (r.sakit || '') + '</td><td>' + (r.ponteng || '') + '</td><td>' + (r.pengangkutan || '') + '</td><td>' + (r.lain || '') + '</td></tr>').join('') +
-      '<tr style="font-weight:600;background:#F8FAFC"><td></td><td class="nm">Jumlah</td><td>' + jum.h + '</td><td>' + jum.l + '</td><td>' + jum.c + '</td><td>' + jum.t + '</td><td>' + peratus(jum.h, jum.t, jum.l, jum.c) + '</td><td>' + jum.sakit + '</td><td>' + jum.ponteng + '</td><td>' + jum.pengangkutan + '</td><td>' + jum.lain + '</td></tr>' +
+      baris.map((r) => '<tr><td>' + r.bil + '</td><td class="nm">' + esc(r.nama) + '</td><td>' + r.h + '</td><td>' + r.t + '</td><td>' + r.p + '</td><td>' + (r.sakit || '') + '</td><td>' + (r.ponteng || '') + '</td><td>' + (r.pengangkutan || '') + '</td><td>' + (r.lain || '') + '</td></tr>').join('') +
+      '<tr style="font-weight:600;background:#F8FAFC"><td></td><td class="nm">Jumlah</td><td>' + jum.h + '</td><td>' + jum.t + '</td><td>' + peratus(jum.h, jum.t, jum.l, jum.c) + '</td><td>' + jum.sakit + '</td><td>' + jum.ponteng + '</td><td>' + jum.pengangkutan + '</td><td>' + jum.lain + '</td></tr>' +
       '</tbody></table></div>' +
-      '<div class="kecil" style="margin-top:10px">H = Hadir, L = Lewat, C = Cuti, T = Tidak hadir. Peratus kehadiran = (Hadir + Lewat) ÷ jumlah hari direkod.</div>' +
+      '<div class="kecil" style="margin-top:10px">Peratus kehadiran = Hadir ÷ jumlah hari direkod.</div>' +
       '<div style="display:flex;justify-content:space-between;gap:24px;margin-top:40px;font-size:13px"><div style="flex:1">Disediakan oleh:<br><br><br>…………………………………<br>Guru kelas</div><div style="flex:1">Disahkan oleh:<br><br><br>…………………………………<br>Penolong Kanan HEM</div></div>' +
       '</main>';
   }
   function muatTurunCSV() {
     const k = kelasIni(); const J = S.sejarah;
     const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
-    const atas = ['Bil', 'Nama murid', 'Hadir', 'Lewat', 'Cuti', 'Tidak hadir', 'Peratus', 'Sakit', 'Ponteng', 'Pengangkutan', 'Lain-lain'];
-    const rows = dataLaporan().map((r) => [r.bil, r.nama, r.h, r.l, r.c, r.t, r.p, r.sakit, r.ponteng, r.pengangkutan, r.lain]);
+    const atas = ['Bil', 'Nama murid', 'Hadir', 'Tidak hadir', 'Peratus', 'Sakit', 'Ponteng', 'Pengangkutan', 'Lain-lain'];
+    const rows = dataLaporan().map((r) => [r.bil, r.nama, r.h, r.t, r.p, r.sakit, r.ponteng, r.pengangkutan, r.lain]);
     const csv = '﻿' + [atas, ...rows].map((r) => r.map(q).join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
@@ -436,7 +434,7 @@
       const n = { H: 0, T: 0, L: 0, C: 0 }; for (const r of rekod) n[r.status]++;
       const urutan = { T: 0, L: 1, C: 2 };
       const tidak = rekod.filter((r) => r.status !== 'H').sort((a, b) => urutan[a.status] - urutan[b.status] || (nama[a.murid_id] || '').localeCompare(nama[b.murid_id] || ''));
-      let badan = '<div class="grid-4" style="margin:14px 0">' + ['H', 'T', 'L', 'C'].map((s) => '<div class="ringkas s-' + s + '"><div class="l">' + LABEL[s] + '</div><div class="n">' + n[s] + '</div></div>').join('') + '</div>';
+      let badan = '<div class="grid-2" style="margin:14px 0">' + ['H', 'T'].map((s) => '<div class="ringkas s-' + s + '"><div class="l">' + LABEL[s] + '</div><div class="n">' + n[s] + '</div></div>').join('') + '</div>';
       badan += tidak.length ? '<div class="senarai">' + tidak.map((r) => {
         const cls = r.status === 'T' ? 'bahaya' : r.status === 'L' ? 'amaran' : 'belum';
         const ket = r.status === 'T' ? esc(r.sebab || '') + (r.catatan ? ' · ' + esc(r.catatan) : '') : LABEL[r.status];
