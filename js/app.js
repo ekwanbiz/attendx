@@ -91,7 +91,8 @@
   function paparNav() {
     const v = S.view === 'laporan' ? 'sejarah' : S.view;
     const b = (id, n, label) => '<button type="button" data-a="nav" data-v="' + id + '" class="' + (v === id ? 'on' : '') + '"' + (v === id ? ' aria-current="page"' : '') + '>' + ikon(n) + label + '</button>';
-    return '<nav class="nav tiada-cetak" aria-label="Menu utama">' + b('utama', 'rumah', 'Utama') + b('rekod', 'semak', 'Rekod') + b('sejarah', 'sejarah', 'Sejarah') + b('analisis', 'carta', 'Analisis') + b('profil', 'profil', 'Profil') + '</nav>';
+    const tengah = '<button type="button" data-a="nav" data-v="rekod" class="tengah' + (v === 'rekod' ? ' on' : '') + '"' + (v === 'rekod' ? ' aria-current="page"' : '') + '><span class="bulat">' + ikon('semak', 28) + '</span>Rekod</button>';
+    return '<nav class="nav tiada-cetak" aria-label="Menu utama">' + b('utama', 'rumah', 'Utama') + b('sejarah', 'sejarah', 'Sejarah') + tengah + b('analisis', 'carta', 'Analisis') + b('profil', 'profil', 'Profil') + '</nav>';
   }
 
   function paparLogin(ralat) {
