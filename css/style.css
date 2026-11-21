@@ -159,7 +159,7 @@ input[type="date"].input, select.input { font-weight: 600; }
 .murid .no { font-size: 12px; color: var(--kelabu); }
 .status-btn { display: flex; gap: 4px; flex-shrink: 0; }
 .status-btn button {
-  width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--garis);
+  min-width: 64px; padding: 0 10px; height: 42px; border-radius: 10px; border: 1px solid var(--garis);
   background: var(--permukaan); color: var(--kelabu-2); font-weight: 600; font-size: 14px;
 }
 .status-btn button.on-H { background: var(--h-bg); color: var(--h-tx); border-color: var(--h-bd); font-weight: 700; }
