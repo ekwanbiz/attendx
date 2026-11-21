@@ -83,7 +83,8 @@ function SupabaseDB(cfg) {
     async ringkasan(tarikh) { return semak(await sb.rpc('ringkasan_harian', { p_tarikh: tarikh })); },
     async sejarahHarian(kelasId, dari, hingga) { return semak(await sb.rpc('sejarah_harian', { p_kelas: kelasId, p_dari: dari, p_hingga: hingga })); },
     async sejarahMurid(kelasId, dari, hingga) { return semak(await sb.rpc('sejarah_murid', { p_kelas: kelasId, p_dari: dari, p_hingga: hingga })); },
-    async amaran(tarikh) { return semak(await sb.rpc('amaran_berturut', { p_tarikh: tarikh, p_hari: 3 })); }
+    async amaran(tarikh) { return semak(await sb.rpc('amaran_berturut', { p_tarikh: tarikh, p_hari: 3 })); },
+    async analisis(dari, hingga) { return semak(await sb.rpc('analisis_bulanan', { p_dari: dari, p_hingga: hingga })); }
   };
 }
 
@@ -240,6 +241,29 @@ function DemoDB() {
         }
       }
       return tunggu(keluar);
+    },
+    async analisis(dari, hingga) {
+      const ting = {}, hari = [], sebab = {}, kls = {};
+      for (const k of kelas) kls[k.id] = { nama: k.nama, tingkatan: k.tingkatan, h: 0, t: 0 };
+      for (const [d, peta] of [...rekod.entries()].sort()) {
+        if (d < dari || d > hingga) continue;
+        const hr = { tarikh: d, h: 0, t: 0 };
+        for (const r of peta.values()) {
+          const st = r.status === 'H' ? 'h' : 't';
+          const k = kls[r.kelas_id];
+          k[st]++; hr[st]++;
+          ting[k.tingkatan] = ting[k.tingkatan] || { tingkatan: k.tingkatan, h: 0, t: 0 };
+          ting[k.tingkatan][st]++;
+          if (r.status === 'T' && r.sebab) sebab[r.sebab] = (sebab[r.sebab] || 0) + 1;
+        }
+        hari.push(hr);
+      }
+      return tunggu({
+        tingkatan: Object.values(ting).sort((a, b) => a.tingkatan - b.tingkatan),
+        harian: hari,
+        sebab: Object.entries(sebab).map(([k, n]) => ({ sebab: k, n })),
+        kelas: Object.values(kls)
+      });
     }
   };
 }

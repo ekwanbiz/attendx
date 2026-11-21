@@ -25,6 +25,7 @@
     keluar: '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 17l-5-5 5-5M5 12h11"/>',
     turun: '<path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/>',
     kalendar: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/>',
+    carta: '<path d="M4 20h16"/><path d="M7 16v-5"/><path d="M12 16V7"/><path d="M17 16v-8"/>',
     telefon: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'
   };
   const ikon = (n, s) => '<svg width="' + (s || 22) + '" height="' + (s || 22) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IKON[n] + '</svg>';
@@ -61,6 +62,7 @@
     utama: { muat: true, ringkasan: [], amaran: [], penuh: false },
     rekod: { tarikh: Tarikh.sekolahTerkini(Tarikh.hariIni()), murid: [], status: {}, asal: '{}', sudah: false, dikemaskini: null, muat: false, menyimpan: false, token: 0 },
     sejarah: { bulan: Tarikh.hariIni().slice(0, 7), tab: 'tarikh', harian: [], muridData: [], muat: false, token: 0 },
+    analisis: { bulan: Tarikh.hariIni().slice(0, 7), data: null, muat: false, token: 0 },
     ralatMuat: null
   };
   const kelasIni = () => S.kelas.find((k) => k.id === S.kelasId) || null;
@@ -78,16 +80,18 @@
     else if (S.view === 'rekod') isi = paparRekod();
     else if (S.view === 'sejarah') isi = paparSejarah();
     else if (S.view === 'laporan') isi = paparLaporan();
+    else if (S.view === 'analisis') isi = paparAnalisis();
     else if (S.view === 'profil') isi = paparProfil();
     const pita = db.mod === 'demo' ? '<div class="demo-pita">Mod demo · data rekaan, tidak disimpan ke pangkalan data</div>' : '';
     $app.innerHTML = pita + isi + paparNav();
     window.scrollTo(0, y);
+    if (S.view === 'analisis') lukisCarta();
   }
 
   function paparNav() {
     const v = S.view === 'laporan' ? 'sejarah' : S.view;
     const b = (id, n, label) => '<button type="button" data-a="nav" data-v="' + id + '" class="' + (v === id ? 'on' : '') + '"' + (v === id ? ' aria-current="page"' : '') + '>' + ikon(n) + label + '</button>';
-    return '<nav class="nav tiada-cetak" aria-label="Menu utama">' + b('utama', 'rumah', 'Utama') + b('rekod', 'semak', 'Rekod') + b('sejarah', 'sejarah', 'Sejarah') + b('profil', 'profil', 'Profil') + '</nav>';
+    return '<nav class="nav tiada-cetak" aria-label="Menu utama">' + b('utama', 'rumah', 'Utama') + b('rekod', 'semak', 'Rekod') + b('sejarah', 'sejarah', 'Sejarah') + b('analisis', 'carta', 'Analisis') + b('profil', 'profil', 'Profil') + '</nav>';
   }
 
   function paparLogin(ralat) {
@@ -372,6 +376,95 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  // ----- Analisis -----
+  const pct = (h, t) => (h + t ? Math.round((h / (h + t)) * 1000) / 10 : 0);
+  let carta = [];
+
+  function paparAnalisis() {
+    const A = S.analisis;
+    const kepala = '<header class="kepala"><h1 class="tajuk-skrin">Analisis kehadiran</h1>' +
+      '<div class="medan"><label for="bulan-analisis">Bulan</label><select class="input" id="bulan-analisis" data-change="bulanAnalisis">' +
+      pilihanBulan().map((b) => '<option value="' + b + '"' + (b === A.bulan ? ' selected' : '') + '>' + Tarikh.bulanLabel(b) + '</option>').join('') +
+      '</select></div></header>';
+    if (A.muat || !A.data) return kepala + '<main class="skrin"><div class="muat"><div class="pusing"></div></div></main>';
+    const D = A.data;
+    if (!D.harian.length) return kepala + '<main class="skrin"><div class="kosong">Tiada rekod kehadiran untuk bulan ini.</div></main>';
+    const jum = D.harian.reduce((a, r) => ({ h: a.h + r.h, t: a.t + r.t }), { h: 0, t: 0 });
+    const ting = D.tingkatan.map((r) => ({ ...r, p: pct(r.h, r.t) }));
+    const terbaik = ting.slice().sort((a, b) => b.p - a.p)[0];
+    const kelas = D.kelas.filter((k) => k.h + k.t).map((k) => ({ ...k, p: pct(k.h, k.t) })).sort((a, b) => a.p - b.p);
+    const tiadaCarta = typeof window.Chart === 'undefined';
+    const kotak = (id, tajuk, tinggi) => '<div class="kad"><div style="font-weight:600;margin-bottom:10px">' + tajuk + '</div>' +
+      (tiadaCarta ? '<div class="kecil">Graf tidak dapat dimuatkan. Semak sambungan internet.</div>' : '<div style="position:relative;height:' + tinggi + 'px"><canvas id="' + id + '"></canvas></div>') + '</div>';
+    return kepala + '<main class="skrin tumpuk">' +
+      '<div class="grid-2">' +
+      '<div class="kad"><div class="angka">' + pct(jum.h, jum.t) + '%</div><div class="angka-label">Purata sekolah</div></div>' +
+      '<div class="kad"><div class="angka">' + D.harian.length + '</div><div class="angka-label">Hari persekolahan</div></div>' +
+      '<div class="kad"><div class="angka">' + jum.t.toLocaleString('ms-MY') + '</div><div class="angka-label">Kes tidak hadir</div></div>' +
+      '<div class="kad"><div class="angka">' + (terbaik ? 'T' + terbaik.tingkatan : '–') + '</div><div class="angka-label">Tingkatan terbaik' + (terbaik ? ' (' + terbaik.p + '%)' : '') + '</div></div>' +
+      '</div>' +
+      kotak('c-tingkatan', 'Kehadiran ikut tingkatan', 220) +
+      kotak('c-harian', 'Trend kehadiran harian', 200) +
+      kotak('c-sebab', 'Sebab tidak hadir', 220) +
+      '<div class="kad"><div style="font-weight:600;margin-bottom:4px">5 kelas kehadiran terendah</div><div class="senarai-ringkas">' +
+      kelas.slice(0, 5).map((k) => '<div><span>Kelas ' + esc(k.nama) + '</span><span class="lencana ' + kelasLencana(k.p) + '">' + k.p + '%</span></div>').join('') +
+      '</div></div>' +
+      '<div class="kad"><div style="font-weight:600;margin-bottom:4px">5 kelas kehadiran tertinggi</div><div class="senarai-ringkas">' +
+      kelas.slice(-5).reverse().map((k) => '<div><span>Kelas ' + esc(k.nama) + '</span><span class="lencana ' + kelasLencana(k.p) + '">' + k.p + '%</span></div>').join('') +
+      '</div></div>' +
+      '</main>';
+  }
+
+  function lukisCarta() {
+    carta.forEach((c) => c.destroy()); carta = [];
+    const D = S.analisis.data;
+    if (!D || !D.harian.length || typeof window.Chart === 'undefined') return;
+    const Ch = window.Chart;
+    Ch.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Ch.defaults.color = '#5B6475';
+    const utama = getComputedStyle(document.documentElement).getPropertyValue('--utama').trim() || '#1E3A8A';
+    const ting = D.tingkatan.map((r) => pct(r.h, r.t));
+    const minY = Math.max(0, Math.floor(Math.min(...ting, ...D.harian.map((r) => pct(r.h, r.t))) / 5) * 5 - 5);
+    const tooltipPct = { callbacks: { label: (c) => ' ' + c.parsed.y + '%' } };
+    const el1 = document.getElementById('c-tingkatan');
+    if (el1) carta.push(new Ch(el1, {
+      type: 'bar',
+      data: { labels: D.tingkatan.map((r) => 'Tingkatan ' + r.tingkatan), datasets: [{ data: ting, backgroundColor: utama, borderRadius: 6, maxBarThickness: 44 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltipPct }, scales: { y: { min: minY, max: 100, ticks: { callback: (v) => v + '%' } }, x: { grid: { display: false } } } }
+    }));
+    const el2 = document.getElementById('c-harian');
+    if (el2) carta.push(new Ch(el2, {
+      type: 'line',
+      data: { labels: D.harian.map((r) => { const d = Tarikh.parse(r.tarikh); return d.getDate() + ' ' + Tarikh.BLN[d.getMonth()]; }), datasets: [{ data: D.harian.map((r) => pct(r.h, r.t)), borderColor: utama, backgroundColor: utama, tension: 0.3, pointRadius: 3 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltipPct }, scales: { y: { min: minY, max: 100, ticks: { callback: (v) => v + '%' } }, x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } } } }
+    }));
+    const el3 = document.getElementById('c-sebab');
+    if (el3) {
+      const urutan = ['Sakit', 'Ponteng', 'Pengangkutan', 'Lain-lain'];
+      const warna = { Sakit: '#2563EB', Ponteng: '#DC2626', Pengangkutan: '#D97706', 'Lain-lain': '#6B7280' };
+      const peta = {}; D.sebab.forEach((s) => { peta[s.sebab || 'Lain-lain'] = (peta[s.sebab || 'Lain-lain'] || 0) + s.n; });
+      carta.push(new Ch(el3, {
+        type: 'doughnut',
+        data: { labels: urutan, datasets: [{ data: urutan.map((k) => peta[k] || 0), backgroundColor: urutan.map((k) => warna[k]), borderWidth: 2, borderColor: '#fff' }] },
+        options: { maintainAspectRatio: false, cutout: '58%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 12 } } } }
+      }));
+    }
+  }
+
+  async function muatAnalisis() {
+    const A = S.analisis;
+    const token = ++A.token;
+    A.muat = true; render();
+    const { dari, hingga } = Tarikh.julatBulan(A.bulan);
+    try {
+      const d = await db.analisis(dari, hingga);
+      if (token !== A.token) return;
+      A.data = d;
+    } catch (e) { toast(e.message, true); A.data = { tingkatan: [], harian: [], sebab: [], kelas: [] }; }
+    A.muat = false;
+    if (S.view === 'analisis') render();
+  }
+
   // ----- Profil -----
   function paparProfil() {
     const awal = (S.user.email || 'AD').slice(0, 2).toUpperCase();
@@ -454,6 +547,7 @@
     if (v === 'utama') muatUtama();
     else if (v === 'rekod') muatRekod();
     else if (v === 'sejarah') muatSejarah();
+    else if (v === 'analisis') muatAnalisis();
     else render();
   }
 
@@ -525,6 +619,8 @@
       R.tarikh = v; muatRekod();
     } else if (el.dataset.change === 'bulan') {
       S.sejarah.bulan = el.value; muatSejarah();
+    } else if (el.dataset.change === 'bulanAnalisis') {
+      S.analisis.bulan = el.value; muatAnalisis();
     }
   });
 
