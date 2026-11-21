@@ -3,7 +3,7 @@
   --utama: #1E3A8A;
   --utama-gelap: #172554;
   --utama-lembut: #E8EEFB;
-  --latar: #FDF2F8;
+  --latar: #FCE7F3;
   --permukaan: #FFFFFF;
   --dakwat: #0F172A;
   --kelabu: #5B6475;
@@ -21,7 +21,7 @@ html, body { margin: 0; padding: 0; }
 body {
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--dakwat);
-  background: #FCE7F3;
+  background: #FBCFE8;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
